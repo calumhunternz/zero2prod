@@ -1,0 +1,4 @@
+Cargo watch command: cargo watch -x check -x test -x run
+linter: cargo clippy -- -D warnings
+formatter: cargo fmt -- --check
+security audit: cargo audit
