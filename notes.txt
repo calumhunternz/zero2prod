@@ -2,3 +2,20 @@ Cargo watch command: cargo watch -x check -x test -x run
 linter: cargo clippy -- -D warnings
 formatter: cargo fmt -- --check
 security audit: cargo audit
+
+Tests:
+Integration tests are typically added to there own external tests folder
+Unit tests are are typically in an embedded test module in the project
+
+run tests: cargo test
+
+Extractors
+Extractors intercept incoming requests to handlers and and extract data
+from them to perform various tasks. If all extractors complete without
+an error only then in the handler ran
+e.g. web::form<T> is an extractor that takes the form data and converts
+it into the concrete type T for use in the handler so there is no need
+to manually process it yourself. If T derives serde deserialise it will
+then appropriatly handle bad requests without the need to handling it
+explicitly. 
+

@@ -3,8 +3,35 @@ name = "zero2prod"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+path = "src/lib.rs"
+
+# The section below is auto generated so it is not needed but added to make clear how the project
+# is structured. Projects can have many binaries but only one library
+[[bin]]
+path = "src/main.rs"
+name = "zero2prod"
 
 [dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 actix-web = "4.5.1"
+serde = { version = "1", features = ["derive"] }
+config = "0.14.0"
+
+# Using table-like toml syntax to avoid a super-long line!
+[dependencies.sqlx]
+version = "0.7"
+default-features = false
+features = [
+    "runtime-tokio-rustls",
+    "macros",
+    "postgres",
+    "uuid",
+    "chrono",
+    "migrate",
+]
+
+# Dev dependencies are used exclusively when running tests or examples
+# They do not get included in the final application binary!
+[dev-dependencies]
+reqwest = "0.11.24"
