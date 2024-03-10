@@ -2,6 +2,20 @@ name: zero2prod
 region: syd1
 services:
   - name: zero2prod
+
+    dockerfile_path: Dockerfile
+    source_dir: .
+    github:
+      branch: main
+      deploy_on_push: true
+      repo: calumhunternz/zero2prod
+    health_check:
+      http_path: /health_check
+    http_port: 8888
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+      - path: /
     envs:
       - key: APP_DATABASE__USERNAME
         scope: RUN_TIME
@@ -18,19 +32,6 @@ services:
       - key: APP_DATABASE__DATABASE_NAME
         scope: RUN_TIME
         value: ${newsletter.DATABASE}
-    dockerfile_path: Dockerfile
-    source_dir: .
-    github:
-      branch: main
-      deploy_on_push: true
-      repo: calumhunternz/zero2prod
-    health_check:
-      http_path: /health_check
-    http_port: 8888
-    instance_count: 1
-    instance_size_slug: basic-xxs
-    routes:
-      - path: /
 databases:
   - engine: PG
     name: newsletter
