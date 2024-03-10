@@ -8,6 +8,8 @@ Integration tests are typically added to there own external tests folder
 Unit tests are are typically in an embedded test module in the project
 
 run tests: cargo test
+if tracing is setup how it is in this project then use: TEST_Log=true cargo test | bunyan
+to get logs in tests
 
 Extractors
 Extractors intercept incoming requests to handlers and and extract data
@@ -19,3 +21,22 @@ to manually process it yourself. If T derives serde deserialise it will
 then appropriatly handle bad requests without the need to handling it
 explicitly. 
 
+Tracing
+Tracing is basically a better logging. The power of it comes from 
+propagating context. For example in a function that takes a request and
+does some database query if you logged you would need to have a request
+id then re-use it in each log for the request. With tracing you have
+spans. Which are basically reference to each part of that function
+e.g. request span (the whole function) and query span (only the part of
+the function that does the query). The query span is part of the request
+span so it is a child. So by adding context to the parent (request span)
+with data such as request id. That id is then propagated to the child
+span. Meaning all traces for the query span have the added context of
+request id without needing to explicitly specify it.
+(This definetly is a rudementary understanding but this part alone blew
+my mind a little when first learning)
+
+cargo-udeps: cargo tool to scan and dependencies and see if they are 
+unused in projects (there by cutting down compilation time) 
+- Not using for this project because it requires nightly at the time 
+  of writing this but is a cool tool to know about.
