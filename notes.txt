@@ -40,3 +40,9 @@ cargo-udeps: cargo tool to scan and dependencies and see if they are
 unused in projects (there by cutting down compilation time) 
 - Not using for this project because it requires nightly at the time 
   of writing this but is a cool tool to know about.
+
+running migrations:
+sqlx migrate add <NAME_OF_MIGRATION>
+SKIP_DOCKER=true ./scripts/init_db.sh
+to run on remote database need to change $DATABASE_URL to the remote url.
+If this does not work look into init_db script

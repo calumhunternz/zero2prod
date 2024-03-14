@@ -32,6 +32,7 @@ claims = "0.7.1"
 validator = "0.17.0"
 quickcheck_macros = "1.0.0"
 wiremock = "0.6.0"
+rand = { version = "0.8.5", features = ["std_rng"] }
 
 [dependencies.reqwest]
 version = "0.11.24"
@@ -56,7 +57,7 @@ features = [
 # They do not get included in the final application binary!
 [dev-dependencies]
 fake = "2.6.1"
-rand = "0.8.5"
 quickcheck = "1.0.3"
 quickcheck_macros = "1.0.0"
 serde_json = "1.0.114"
+linkify = "0.10.0"
