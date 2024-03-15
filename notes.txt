@@ -44,5 +44,5 @@ unused in projects (there by cutting down compilation time)
 running migrations:
 sqlx migrate add <NAME_OF_MIGRATION>
 SKIP_DOCKER=true ./scripts/init_db.sh
-to run on remote database need to change $DATABASE_URL to the remote url.
-If this does not work look into init_db script
+
+Migrate remote database: DATABASE_URL=<remote-connection-string> sqlx migrate run
