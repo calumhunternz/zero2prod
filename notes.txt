@@ -46,3 +46,5 @@ sqlx migrate add <NAME_OF_MIGRATION>
 SKIP_DOCKER=true ./scripts/init_db.sh
 
 Migrate remote database: DATABASE_URL=<remote-connection-string> sqlx migrate run
+
+A rule of thumb: Log the error when it is handled not when it is propogated (Unless it can provide more context)
