@@ -12,7 +12,7 @@ impl SubscriptionToken {
         }
     }
 
-    pub fn generate_subscription_token() -> SubscriptionToken {
+    pub fn generate_subscription_token() -> Self {
         let mut rng = thread_rng();
         let token = std::iter::repeat_with(|| rng.sample(Alphanumeric))
             .map(char::from)

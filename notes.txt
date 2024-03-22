@@ -48,3 +48,5 @@ SKIP_DOCKER=true ./scripts/init_db.sh
 Migrate remote database: DATABASE_URL=<remote-connection-string> sqlx migrate run
 
 A rule of thumb: Log the error when it is handled not when it is propogated (Unless it can provide more context)
+
+To Fix erorr with tests "Too many open files" use: ulimit -n 10000
