@@ -2,6 +2,7 @@ use crate::{
     domain::{NewSubscriber, SubscriberEmail, SubscriberName, SubscriptionToken},
     email_client::EmailClient,
     startup::ApplicationBaseUrl,
+    utils::error_chain_fmt,
 };
 use actix_web::ResponseError;
 use actix_web::{web, HttpResponse};
@@ -10,19 +11,6 @@ use chrono::Utc;
 use reqwest::StatusCode;
 use sqlx::{Executor, PgPool, Postgres, Transaction};
 use uuid::Uuid;
-
-pub fn error_chain_fmt(
-    e: &impl std::error::Error,
-    f: &mut std::fmt::Formatter<'_>,
-) -> std::fmt::Result {
-    writeln!(f, "{}\n", e)?;
-    let mut current = e.source();
-    while let Some(cause) = current {
-        writeln!(f, "Caused by:\n\t{}", cause)?;
-        current = cause.source();
-    }
-    Ok(())
-}
 
 #[derive(thiserror::Error)]
 pub enum SubscribeError {
