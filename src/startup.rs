@@ -15,6 +15,7 @@ use tracing_actix_web::TracingLogger;
 use crate::authentication::reject_anonymous_users;
 use crate::configuration::{DatabaseSettings, Settings};
 use crate::email_client::EmailClient;
+use crate::routes::get::newsletter_form;
 use crate::routes::{
     admin_dashboard, change_password, change_password_form, confirm, health_check, log_out,
     publish_newsletter, subscribe,
@@ -110,10 +111,11 @@ pub async fn run(
             .route("/health_check", web::get().to(health_check))
             .route("/subscriptions", web::post().to(subscribe))
             .route("/subscriptions/confirm", web::get().to(confirm))
-            .route("/newsletters", web::post().to(publish_newsletter))
             .service(
                 web::scope("/admin")
                     .wrap(from_fn(reject_anonymous_users))
+                    .route("/newsletters", web::get().to(newsletter_form))
+                    .route("/newsletters", web::post().to(publish_newsletter))
                     .route("/dashboard", web::get().to(admin_dashboard))
                     .route("/password", web::get().to(change_password_form))
                     .route("/password", web::post().to(change_password))

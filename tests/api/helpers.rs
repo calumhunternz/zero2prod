@@ -3,7 +3,8 @@ use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use uuid::Uuid;
-use wiremock::MockServer;
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 use zero2prod::configuration::{get_configuration, DatabaseSettings};
 use zero2prod::startup::{get_connection_pool, Application};
 use zero2prod::telemetry::{get_subscriber, init_subscriber};
@@ -66,15 +67,30 @@ impl TestApp {
             .expect("Failed to execute request.")
     }
 
-    pub async fn post_newsletters(&self, body: serde_json::Value) -> reqwest::Response {
+    pub async fn get_newsletters(&self) -> reqwest::Response {
         self.api_client
-            .post(&format!("{}/newsletters", &self.address))
-            .basic_auth(&self.test_user.username, Some(&self.test_user.password))
-            .json(&body)
+            .get(format!("{}/admin/newsletters", &self.address))
+            .send()
+            .await
+            .expect("Failed to get newsletters page")
+    }
+
+    pub async fn get_newsletters_html(&self) -> String {
+        self.get_newsletters().await.text().await.unwrap()
+    }
+
+    pub async fn post_newsletters<Body>(&self, body: &Body) -> reqwest::Response
+    where
+        Body: serde::Serialize,
+    {
+        self.api_client
+            .post(&format!("{}/admin/newsletters", &self.address))
+            .form(body)
             .send()
             .await
             .expect("Failed to execute request.")
     }
+
     pub async fn get_login_html(&self) -> String {
         self.api_client
             .get(&format!("{}/login", &self.address))
@@ -168,6 +184,14 @@ impl TestUser {
         .await
         .expect("Failed to store test user.");
     }
+
+    pub async fn login(&self, app: &TestApp) {
+        app.post_login(&serde_json::json!({
+            "username": &self.username,
+            "password": &self.password
+        }))
+        .await;
+    }
 }
 
 pub async fn spawn_app() -> TestApp {
@@ -253,4 +277,28 @@ static TRACING: Lazy<()> = Lazy::new(|| {
 pub fn assert_is_redirect_to(response: &reqwest::Response, location: &str) {
     assert_eq!(response.status().as_u16(), 303);
     assert_eq!(response.headers().get("Location").unwrap(), location);
+}
+
+pub async fn create_unconfirmed_subscriber(app: &TestApp) -> ConfirmationLinks {
+    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+    let _mock_guard = Mock::given(path("/email"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .named("Create unconfirmed subscriber")
+        .expect(1)
+        .mount_as_scoped(&app.email_server)
+        .await;
+
+    app.post_subscriptions(body.into())
+        .await
+        .error_for_status()
+        .unwrap();
+    let email_request = &app
+        .email_server
+        .received_requests()
+        .await
+        .unwrap()
+        .pop()
+        .unwrap();
+    app.get_confirmation_links(email_request)
 }
