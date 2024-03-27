@@ -1,11 +1,16 @@
 use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
+use fake::faker::internet::en::SafeEmail;
+use fake::faker::name::en::Name;
+use fake::Fake;
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use uuid::Uuid;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 use zero2prod::configuration::{get_configuration, DatabaseSettings};
+use zero2prod::email_client::EmailClient;
+use zero2prod::issue_delivery_worker::{try_execute_task, ExecutionOutcome};
 use zero2prod::startup::{get_connection_pool, Application};
 use zero2prod::telemetry::{get_subscriber, init_subscriber};
 
@@ -21,6 +26,7 @@ pub struct TestApp {
     pub port: u16,
     pub api_client: reqwest::Client,
     pub test_user: TestUser,
+    pub email_client: EmailClient,
 }
 
 impl TestApp {
@@ -144,6 +150,17 @@ impl TestApp {
             .await
             .expect("Failed to execute request.")
     }
+    pub async fn dispatch_all_pending_emails(&self) {
+        loop {
+            if let ExecutionOutcome::EmptyQueue =
+                try_execute_task(&self.db_pool, &self.email_client)
+                    .await
+                    .unwrap()
+            {
+                break;
+            }
+        }
+    }
 }
 
 pub struct TestUser {
@@ -234,6 +251,7 @@ pub async fn spawn_app() -> TestApp {
         port: server_port,
         test_user: TestUser::generate(),
         api_client,
+        email_client: configuration.email_client.client(),
     };
     test_app.test_user.store(&test_app.db_pool).await;
     test_app
@@ -280,7 +298,13 @@ pub fn assert_is_redirect_to(response: &reqwest::Response, location: &str) {
 }
 
 pub async fn create_unconfirmed_subscriber(app: &TestApp) -> ConfirmationLinks {
-    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+    let name: String = Name().fake();
+    let email: String = SafeEmail().fake();
+    let body = serde_urlencoded::to_string(serde_json::json!({
+    "name": name,
+    "email": email
+    }))
+    .unwrap();
     let _mock_guard = Mock::given(path("/email"))
         .and(method("POST"))
         .respond_with(ResponseTemplate::new(200))
@@ -289,7 +313,7 @@ pub async fn create_unconfirmed_subscriber(app: &TestApp) -> ConfirmationLinks {
         .mount_as_scoped(&app.email_server)
         .await;
 
-    app.post_subscriptions(body.into())
+    app.post_subscriptions(body)
         .await
         .error_for_status()
         .unwrap();
